@@ -1,0 +1,39 @@
+name: Build APK
+
+# Manual button: Actions tab -> Build APK -> Run workflow
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Unpack project.zip
+        run: |
+          unzip -q project.zip -d src
+          ls src
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+          build-root-directory: src
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses > /dev/null || true
+
+      - name: Build debug APK
+        working-directory: src
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Loomview-Maker-debug-apk
+          path: src/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
